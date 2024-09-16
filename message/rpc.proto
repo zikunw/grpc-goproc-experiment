@@ -1,0 +1,21 @@
+syntax = "proto3";
+
+package message;
+
+option go_package = "github.com/zikunw/grpc-goproc-experiment/message";
+
+service Worker {
+  // APIs for workers to interact with each other
+  rpc Input(stream Batch) returns (stream Response) {}
+}
+
+message Batch {
+  repeated KV kvs = 1;
+}
+
+message KV {
+  int64 key = 1;
+  int64 value = 2;
+}
+
+message Response {}
