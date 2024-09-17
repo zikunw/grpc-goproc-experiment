@@ -5,15 +5,16 @@ import time
 EXPERIMENTS = [
   {"numReciever": 1, "gomaxprocs": 1},
   {"numReciever": 1, "gomaxprocs": 2},
-  {"numReciever": 1, "gomaxprocs": 3},
   {"numReciever": 1, "gomaxprocs": 4},
+  {"numReciever": 1, "gomaxprocs": 8},
+  {"numReciever": 2, "gomaxprocs": 1},
   {"numReciever": 2, "gomaxprocs": 2},
-  {"numReciever": 2, "gomaxprocs": 3},
   {"numReciever": 2, "gomaxprocs": 4},
+  {"numReciever": 2, "gomaxprocs": 8},
+  {"numReciever": 3, "gomaxprocs": 1},
   {"numReciever": 3, "gomaxprocs": 2},
-  {"numReciever": 3, "gomaxprocs": 3},
   {"numReciever": 3, "gomaxprocs": 4},
-  {"numReciever": 3, "gomaxprocs": 5},
+  {"numReciever": 3, "gomaxprocs": 8},
 ]
 RECIEVER_PORTS = [
   10000,
