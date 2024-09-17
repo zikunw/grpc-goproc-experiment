@@ -23,7 +23,7 @@ RECIEVER_PORTS = [
   10004,
   10005
 ]
-NUM_TUPLES = 1_000_000
+NUM_TUPLES = 100_000_000
 BATCH_SIZE = 5_000
 
 def runSender(numReciever, gomaxprocs, numTuples, batchSize):

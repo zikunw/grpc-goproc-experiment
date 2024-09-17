@@ -19,12 +19,6 @@ var gomaxprocs int
 var numTuples int
 var batchSize int
 
-// SETime
-type SETime = struct {
-	start time.Time
-	end   time.Time
-}
-
 // Reciever list (index=#reciever-1)
 var RECIEVER_ADDRS = []string{
 	"localhost:10000",
@@ -63,7 +57,7 @@ func main() {
 	var wg sync.WaitGroup
 	for i, stream := range reciever_streams {
 		wg.Add(1)
-		go run(stream, wg, buffer, numTuples/numReciever, recievers[i])
+		go run(stream, &wg, buffer, numTuples/numReciever, recievers[i])
 	}
 	wg.Wait()
 	duration := time.Since(startTime)
@@ -79,7 +73,7 @@ func main() {
 	}
 }
 
-func run(stream *BatchStream, wg sync.WaitGroup, buffer *Buffer, numTuples int, addr string) {
+func run(stream *BatchStream, wg *sync.WaitGroup, buffer *Buffer, numTuples int, addr string) {
 	count := 0
 	fmt.Println("Downstream started running")
 	//=======Critical Section=====
