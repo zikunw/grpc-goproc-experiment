@@ -2,10 +2,11 @@ import os
 import subprocess
 
 EXPERIMENTS = [
-  {
-    "numReciever": 1,
-    "gomaxprocs": 1,
-  }
+  {"numReciever": 1, "gomaxprocs": 1},
+  {"numReciever": 1, "gomaxprocs": 2},
+  {"numReciever": 1, "gomaxprocs": 4},
+  {"numReciever": 1, "gomaxprocs": 8},
+
 ]
 RECIEVER_PORTS = [
   10000,
