@@ -15,19 +15,19 @@ RECIEVER_PORTS = [
   10004,
   10005
 ]
-NUM_TUPLES = 100_000_000
+NUM_TUPLES = 1_000_000
 BATCH_SIZE = 5_000
 
 def runSender(numReciever, gomaxprocs, numTuples, batchSize):
-  run_process_in_background(f"./bin/sender --num={numReciever} --proc={gomaxprocs} -t={numTuples} --batch={batchSize}")
+  os.system(f"./bin/sender --num={numReciever} --proc={gomaxprocs} -t={numTuples} --batch={batchSize}")
 
 def runReciever(port, gomaxprocs):
-  os.system(f"./bin/reciever --port={port} --proc={gomaxprocs}")
+  run_process_in_background(f"./bin/reciever --port={port} --proc={gomaxprocs}")
 
 def runExperiment(numReciever, gomaxprocs):
   # run receivers
   for i in range(numReciever):
-    runReciever(RECIEVER_PORTS[i], gomaxprocs)
+    runReciever(RECIEVER_PORTS[i], 2)
   # run sender
   runSender(numReciever, gomaxprocs, NUM_TUPLES, BATCH_SIZE)
 

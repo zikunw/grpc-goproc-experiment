@@ -71,7 +71,7 @@ func main() {
 
 	for range reciever_streams {
 		result := <-timeChan
-		_, err = f.WriteString(fmt.Sprintf("%d\n", result.end.Sub(result.start)))
+		_, err = f.WriteString(fmt.Sprintf("%d,%d,%d\n", numReciever, gomaxprocs, result.end.Sub(result.start)))
 		if err != nil {
 			panic(err)
 		}
