@@ -4,9 +4,15 @@ import subprocess
 EXPERIMENTS = [
   {"numReciever": 1, "gomaxprocs": 1},
   {"numReciever": 1, "gomaxprocs": 2},
+  {"numReciever": 1, "gomaxprocs": 3},
   {"numReciever": 1, "gomaxprocs": 4},
-  {"numReciever": 1, "gomaxprocs": 8},
-
+  {"numReciever": 2, "gomaxprocs": 2},
+  {"numReciever": 2, "gomaxprocs": 3},
+  {"numReciever": 2, "gomaxprocs": 4},
+  {"numReciever": 3, "gomaxprocs": 2},
+  {"numReciever": 3, "gomaxprocs": 3},
+  {"numReciever": 3, "gomaxprocs": 4},
+  {"numReciever": 3, "gomaxprocs": 5},
 ]
 RECIEVER_PORTS = [
   10000,
@@ -32,6 +38,7 @@ def runExperiment(numReciever, gomaxprocs):
   # run sender
   runSender(numReciever, gomaxprocs, NUM_TUPLES, BATCH_SIZE)
 
+
 def run_process_in_background(command):
   """
   Run a process in the background.
@@ -45,7 +52,9 @@ def run_process_in_background(command):
     print(f"An error occurred when running {command}: {e}")
 
 def main():
-  runExperiment(1, 2)
+  for e in EXPERIMENTS:
+    runExperiment(e["numReciever"], e["gomaxprocs"])
+    sleep(30)
 
 if __name__=="__main__":
   main()
