@@ -25,6 +25,7 @@ RECIEVER_PORTS = [
 ]
 NUM_TUPLES = 100_000_000
 BATCH_SIZE = 5_000
+REPEAT = 3
 
 def runSender(numReciever, gomaxprocs, numTuples, batchSize):
   os.system(f"./bin/sender --num={numReciever} --proc={gomaxprocs} -t={numTuples} --batch={batchSize}")
@@ -41,10 +42,6 @@ def runExperiment(numReciever, gomaxprocs):
 
 
 def run_process_in_background(command):
-  """
-  Run a process in the background.
-  """
-
   try:
     # Run the command in the background and hide the output
     subprocess.Popen(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
@@ -54,8 +51,9 @@ def run_process_in_background(command):
 
 def main():
   for e in EXPERIMENTS:
-    runExperiment(e["numReciever"], e["gomaxprocs"])
-    time.sleep(30)
+    for _ in range(REPEAT):
+      runExperiment(e["numReciever"], e["gomaxprocs"])
+      time.sleep(30)
 
 if __name__=="__main__":
   main()
