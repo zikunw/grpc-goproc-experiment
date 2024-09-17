@@ -1,5 +1,6 @@
 import os
 import subprocess
+import time
 
 EXPERIMENTS = [
   {"numReciever": 1, "gomaxprocs": 1},
@@ -54,7 +55,7 @@ def run_process_in_background(command):
 def main():
   for e in EXPERIMENTS:
     runExperiment(e["numReciever"], e["gomaxprocs"])
-    sleep(30)
+    time.sleep(30)
 
 if __name__=="__main__":
   main()
