@@ -1,12 +1,16 @@
 package main
 
 import (
+	"context"
 	"flag"
 	"fmt"
+	"os"
+	"path"
 	"runtime"
 	"time"
 
 	"github.com/zikunw/grpc-goproc-experiment/message"
+	"google.golang.org/grpc"
 )
 
 // Commandline input
@@ -56,22 +60,36 @@ func main() {
 
 	// Start experiment
 	timeChan := make(chan SETime, 10)
-	for _, stream := range reciever_streams {
-		go run(stream, timeChan, buffer, numTuples/numReciever)
+	for i, stream := range reciever_streams {
+		go run(stream, timeChan, buffer, numTuples/numReciever, recievers[i])
+	}
+
+	f, err := os.Create(path.Join("./result.txt"))
+	if err != nil {
+		panic(err)
 	}
 
 	for range reciever_streams {
-		fmt.Println(<-timeChan)
+		result := <-timeChan
+		_, err = f.WriteString(fmt.Sprintf("%d\n", result.end.Sub(result.start)))
+		if err != nil {
+			panic(err)
+		}
 	}
+	f.Close()
 }
 
-func run(stream *BatchStream, timeChan chan SETime, buffer *Buffer, numTuples int) {
+func run(stream *BatchStream, timeChan chan SETime, buffer *Buffer, numTuples int, addr string) {
 	count := 0
+	fmt.Println("Downstream started running")
 	start_time := time.Now()
 	//=======Critical Section=====
 	for count+len(buffer.Content) < numTuples {
 		count += int(buffer.Size)
-		stream.Put(buffer)
+		err := stream.Put(buffer)
+		if err != nil {
+			panic(err)
+		}
 	}
 	//============================
 	end_time := time.Now()
@@ -80,4 +98,14 @@ func run(stream *BatchStream, timeChan chan SETime, buffer *Buffer, numTuples in
 		end:   end_time,
 	}
 	stream.Close()
+	shutdown(addr)
+}
+
+func shutdown(address string) {
+	conn, err := grpc.Dial(address, grpc.WithInsecure())
+	if err != nil {
+		panic(err)
+	}
+	client := message.NewWorkerClient(conn)
+	client.Shutdown(context.Background(), &message.Empty{})
 }

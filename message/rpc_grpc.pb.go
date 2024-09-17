@@ -24,6 +24,7 @@ const _ = grpc.SupportPackageIsVersion7
 type WorkerClient interface {
 	// APIs for workers to interact with each other
 	Input(ctx context.Context, opts ...grpc.CallOption) (Worker_InputClient, error)
+	Shutdown(ctx context.Context, in *Empty, opts ...grpc.CallOption) (*Empty, error)
 }
 
 type workerClient struct {
@@ -65,12 +66,22 @@ func (x *workerInputClient) Recv() (*Response, error) {
 	return m, nil
 }
 
+func (c *workerClient) Shutdown(ctx context.Context, in *Empty, opts ...grpc.CallOption) (*Empty, error) {
+	out := new(Empty)
+	err := c.cc.Invoke(ctx, "/message.Worker/Shutdown", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // WorkerServer is the server API for Worker service.
 // All implementations must embed UnimplementedWorkerServer
 // for forward compatibility
 type WorkerServer interface {
 	// APIs for workers to interact with each other
 	Input(Worker_InputServer) error
+	Shutdown(context.Context, *Empty) (*Empty, error)
 	mustEmbedUnimplementedWorkerServer()
 }
 
@@ -80,6 +91,9 @@ type UnimplementedWorkerServer struct {
 
 func (UnimplementedWorkerServer) Input(Worker_InputServer) error {
 	return status.Errorf(codes.Unimplemented, "method Input not implemented")
+}
+func (UnimplementedWorkerServer) Shutdown(context.Context, *Empty) (*Empty, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Shutdown not implemented")
 }
 func (UnimplementedWorkerServer) mustEmbedUnimplementedWorkerServer() {}
 
@@ -120,13 +134,36 @@ func (x *workerInputServer) Recv() (*Batch, error) {
 	return m, nil
 }
 
+func _Worker_Shutdown_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(Empty)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(WorkerServer).Shutdown(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/message.Worker/Shutdown",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(WorkerServer).Shutdown(ctx, req.(*Empty))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // Worker_ServiceDesc is the grpc.ServiceDesc for Worker service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
 var Worker_ServiceDesc = grpc.ServiceDesc{
 	ServiceName: "message.Worker",
 	HandlerType: (*WorkerServer)(nil),
-	Methods:     []grpc.MethodDesc{},
+	Methods: []grpc.MethodDesc{
+		{
+			MethodName: "Shutdown",
+			Handler:    _Worker_Shutdown_Handler,
+		},
+	},
 	Streams: []grpc.StreamDesc{
 		{
 			StreamName:    "Input",

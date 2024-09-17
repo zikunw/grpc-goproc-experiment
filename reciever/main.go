@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"flag"
 	"net"
 	"runtime"
@@ -21,7 +22,7 @@ func main() {
 	runtime.GOMAXPROCS(gomaxprocs)
 
 	s := grpc.NewServer()
-	w := &Worker{}
+	w := &Worker{server: s}
 	message.RegisterWorkerServer(s, w)
 	lis, err := net.Listen("tcp", ":"+strconv.FormatInt(port, 10))
 	if err != nil {
@@ -34,6 +35,8 @@ func main() {
 
 type Worker struct {
 	message.UnimplementedWorkerServer
+
+	server *grpc.Server
 }
 
 func (w *Worker) Input(stream message.Worker_InputServer) error {
@@ -44,4 +47,9 @@ func (w *Worker) Input(stream message.Worker_InputServer) error {
 		}
 		stream.Send(&message.Response{})
 	}
+}
+
+func (w *Worker) Shutdown(_ context.Context, _ *message.Empty) (*message.Empty, error) {
+	w.server.GracefulStop()
+	return &message.Empty{}, nil
 }
