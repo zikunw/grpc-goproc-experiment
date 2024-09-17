@@ -5,8 +5,8 @@ import (
 	"flag"
 	"fmt"
 	"os"
-	"path"
 	"runtime"
+	"sync"
 	"time"
 
 	"github.com/zikunw/grpc-goproc-experiment/message"
@@ -59,30 +59,29 @@ func main() {
 	}
 
 	// Start experiment
-	timeChan := make(chan SETime, 10)
+	startTime := time.Now()
+	var wg sync.WaitGroup
 	for i, stream := range reciever_streams {
-		go run(stream, timeChan, buffer, numTuples/numReciever, recievers[i])
+		wg.Add(1)
+		go run(stream, wg, buffer, numTuples/numReciever, recievers[i])
 	}
+	wg.Wait()
+	duration := time.Since(startTime)
 
-	f, err := os.Create(path.Join("./result.txt"))
+	f, err := os.OpenFile("./result.txt", os.O_RDWR|os.O_APPEND, 0660)
 	if err != nil {
 		panic(err)
 	}
 
-	for range reciever_streams {
-		result := <-timeChan
-		_, err = f.WriteString(fmt.Sprintf("%d,%d,%d\n", numReciever, gomaxprocs, result.end.Sub(result.start)))
-		if err != nil {
-			panic(err)
-		}
+	_, err = f.WriteString(fmt.Sprintf("%d,%d,%d\n", numReciever, gomaxprocs, duration))
+	if err != nil {
+		panic(err)
 	}
-	f.Close()
 }
 
-func run(stream *BatchStream, timeChan chan SETime, buffer *Buffer, numTuples int, addr string) {
+func run(stream *BatchStream, wg sync.WaitGroup, buffer *Buffer, numTuples int, addr string) {
 	count := 0
 	fmt.Println("Downstream started running")
-	start_time := time.Now()
 	//=======Critical Section=====
 	for count+len(buffer.Content) < numTuples {
 		count += int(buffer.Size)
@@ -91,12 +90,7 @@ func run(stream *BatchStream, timeChan chan SETime, buffer *Buffer, numTuples in
 			panic(err)
 		}
 	}
-	//============================
-	end_time := time.Now()
-	timeChan <- SETime{
-		start: start_time,
-		end:   end_time,
-	}
+	wg.Done()
 	stream.Close()
 	shutdown(addr)
 }
