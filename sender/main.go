@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"runtime"
+	"sync"
 	"time"
 
 	"github.com/zikunw/grpc-goproc-experiment/message"
@@ -69,12 +70,16 @@ func main() {
 	}
 
 	// Start experiment
+	var wg *sync.WaitGroup
 	for i, stream := range reciever_streams {
-		go run(stream, buffer, numTuples/numReciever, recievers[i])
+		wg.Add(1)
+		go run(stream, wg, buffer, numTuples/numReciever, recievers[i])
 	}
+
+	wg.Wait()
 }
 
-func run(stream *BatchStream, buffer *Buffer, numTuples int, addr string) {
+func run(stream *BatchStream, wg *sync.WaitGroup, buffer *Buffer, numTuples int, addr string) {
 	count := 0
 	fmt.Println("Downstream started running")
 	start := time.Now()
@@ -93,6 +98,7 @@ func run(stream *BatchStream, buffer *Buffer, numTuples int, addr string) {
 	if err != nil {
 		panic(err)
 	}
+	wg.Done()
 }
 
 func shutdown(address string) {
