@@ -53,6 +53,8 @@ func main() {
 	flag.IntVar(&batchSize, "batch", 1, "Batch Size (default=1)")
 	flag.Parse()
 
+	println("Running sender with", numReciever, gomaxprocs, numTuples, batchSize)
+
 	runtime.GOMAXPROCS(gomaxprocs)
 
 	// Create downstreams
@@ -90,9 +92,11 @@ func run(stream *BatchStream, wg *sync.WaitGroup, buffer *Buffer, numTuples int,
 			panic(err)
 		}
 	}
+	fmt.Println("Downstream finished")
 	duration := time.Since(start)
 	stream.Close()
-	shutdown(addr)
+	go shutdown(addr)
+	fmt.Println("Closed down stream")
 
 	_, err := f.WriteString(fmt.Sprintf("%d,%d,%s,%d\n", numReciever, gomaxprocs, addr, duration))
 	if err != nil {

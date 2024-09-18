@@ -7,18 +7,18 @@ EXPERIMENTS = [
   {"numReciever": 1, "gomaxprocs": 2},
   {"numReciever": 1, "gomaxprocs": 3},
   {"numReciever": 1, "gomaxprocs": 4},
-  {"numReciever": 2, "gomaxprocs": 1},
-  {"numReciever": 2, "gomaxprocs": 2},
-  {"numReciever": 2, "gomaxprocs": 3},
-  {"numReciever": 2, "gomaxprocs": 4},
-  {"numReciever": 4, "gomaxprocs": 1},
-  {"numReciever": 4, "gomaxprocs": 2},
-  {"numReciever": 4, "gomaxprocs": 3},
-  {"numReciever": 4, "gomaxprocs": 4},
-  {"numReciever": 8, "gomaxprocs": 1},
-  {"numReciever": 8, "gomaxprocs": 2},
-  {"numReciever": 8, "gomaxprocs": 3},
-  {"numReciever": 8, "gomaxprocs": 4},
+  # {"numReciever": 2, "gomaxprocs": 1},
+  # {"numReciever": 2, "gomaxprocs": 2},
+  # {"numReciever": 2, "gomaxprocs": 3},
+  # {"numReciever": 2, "gomaxprocs": 4},
+  # {"numReciever": 4, "gomaxprocs": 1},
+  # {"numReciever": 4, "gomaxprocs": 2},
+  # {"numReciever": 4, "gomaxprocs": 3},
+  # {"numReciever": 4, "gomaxprocs": 4},
+  # {"numReciever": 8, "gomaxprocs": 1},
+  # {"numReciever": 8, "gomaxprocs": 2},
+  # {"numReciever": 8, "gomaxprocs": 3},
+  # {"numReciever": 8, "gomaxprocs": 4},
 ]
 RECIEVER_PORTS = [
   10000,
@@ -58,7 +58,7 @@ def main():
   for e in EXPERIMENTS:
     for _ in range(REPEAT):
       runExperiment(e["numReciever"], e["gomaxprocs"])
-      time.sleep(30)
+      time.sleep(5)
 
 if __name__=="__main__":
   main()

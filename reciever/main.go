@@ -19,6 +19,8 @@ func main() {
 	flag.IntVar(&gomaxprocs, "proc", 1, "Num for GOMAXPROCS config (default=1)")
 	flag.Parse()
 
+	println("Running sender with", port, gomaxprocs)
+
 	runtime.GOMAXPROCS(gomaxprocs)
 
 	s := grpc.NewServer()
@@ -40,6 +42,7 @@ type Worker struct {
 }
 
 func (w *Worker) Input(stream message.Worker_InputServer) error {
+
 	for {
 		_, err := stream.Recv()
 		if err != nil {
