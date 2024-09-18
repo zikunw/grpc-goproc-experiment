@@ -70,10 +70,10 @@ func main() {
 	}
 
 	// Start experiment
-	var wg *sync.WaitGroup
+	var wg sync.WaitGroup
 	for i, stream := range reciever_streams {
 		wg.Add(1)
-		go run(stream, wg, buffer, numTuples/numReciever, recievers[i])
+		go run(stream, &wg, buffer, numTuples/numReciever, recievers[i])
 	}
 
 	wg.Wait()
