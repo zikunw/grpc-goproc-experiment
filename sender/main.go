@@ -44,6 +44,10 @@ func init() {
 	if err != nil {
 		panic(err)
 	}
+	_, err = f.WriteString("\n")
+	if err != nil {
+		panic(err)
+	}
 }
 
 func main() {

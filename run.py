@@ -7,18 +7,18 @@ EXPERIMENTS = [
   {"numReciever": 1, "gomaxprocs": 2},
   {"numReciever": 1, "gomaxprocs": 3},
   {"numReciever": 1, "gomaxprocs": 4},
-  # {"numReciever": 2, "gomaxprocs": 1},
-  # {"numReciever": 2, "gomaxprocs": 2},
-  # {"numReciever": 2, "gomaxprocs": 3},
-  # {"numReciever": 2, "gomaxprocs": 4},
-  # {"numReciever": 4, "gomaxprocs": 1},
-  # {"numReciever": 4, "gomaxprocs": 2},
-  # {"numReciever": 4, "gomaxprocs": 3},
-  # {"numReciever": 4, "gomaxprocs": 4},
-  # {"numReciever": 8, "gomaxprocs": 1},
-  # {"numReciever": 8, "gomaxprocs": 2},
-  # {"numReciever": 8, "gomaxprocs": 3},
-  # {"numReciever": 8, "gomaxprocs": 4},
+  {"numReciever": 2, "gomaxprocs": 1},
+  {"numReciever": 2, "gomaxprocs": 2},
+  {"numReciever": 2, "gomaxprocs": 3},
+  {"numReciever": 2, "gomaxprocs": 4},
+  {"numReciever": 4, "gomaxprocs": 1},
+  {"numReciever": 4, "gomaxprocs": 2},
+  {"numReciever": 4, "gomaxprocs": 3},
+  {"numReciever": 4, "gomaxprocs": 4},
+  {"numReciever": 8, "gomaxprocs": 1},
+  {"numReciever": 8, "gomaxprocs": 2},
+  {"numReciever": 8, "gomaxprocs": 3},
+  {"numReciever": 8, "gomaxprocs": 4},
 ]
 RECIEVER_PORTS = [
   10000,
@@ -26,9 +26,12 @@ RECIEVER_PORTS = [
   10002,
   10003,
   10004,
-  10005
+  10005,
+  10006,
+  10007,
+  10008,
 ]
-NUM_TUPLES = 10_000_000
+NUM_TUPLES = 100_000_000
 BATCH_SIZE = 5_000
 REPEAT = 3
 
