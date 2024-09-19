@@ -113,6 +113,20 @@ func run(addr string, wg *sync.WaitGroup, buffer *Buffer, numTuples int) {
 
 	count := 0
 	batchCache := &message.Batch{}
+	var i uint
+	for i = 0; i < buffer.Size; i++ { // For each key-value pair in the buffer
+		if len(batchCache.Kvs) == cap(batchCache.Kvs) {
+			batchCache.Kvs = append(batchCache.Kvs, message.KVFromVTPool())
+		} else {
+			batchCache.Kvs = batchCache.Kvs[:len(batchCache.Kvs)+1]
+			if batchCache.Kvs[len(batchCache.Kvs)-1] == nil {
+				batchCache.Kvs[len(batchCache.Kvs)-1] = message.KVFromVTPool()
+			}
+		}
+		batchCache.Kvs[i].Key = (*buffer).Content[i].Key
+		batchCache.Kvs[i].Value = (*buffer).Content[i].Value
+	}
+
 	fmt.Println("Downstream started running with", addr, numTuples)
 
 	start := time.Now()
@@ -120,19 +134,6 @@ func run(addr string, wg *sync.WaitGroup, buffer *Buffer, numTuples int) {
 	for count+int(buffer.Size) < numTuples {
 
 		var err error
-		var i uint
-		for i = 0; i < buffer.Size; i++ { // For each key-value pair in the buffer
-			if len(batchCache.Kvs) == cap(batchCache.Kvs) {
-				batchCache.Kvs = append(batchCache.Kvs, message.KVFromVTPool())
-			} else {
-				batchCache.Kvs = batchCache.Kvs[:len(batchCache.Kvs)+1]
-				if batchCache.Kvs[len(batchCache.Kvs)-1] == nil {
-					batchCache.Kvs[len(batchCache.Kvs)-1] = message.KVFromVTPool()
-				}
-			}
-			batchCache.Kvs[i].Key = (*buffer).Content[i].Key
-			batchCache.Kvs[i].Value = (*buffer).Content[i].Value
-		}
 
 		err = stream.Send(batchCache)
 		if err != nil {
@@ -148,13 +149,11 @@ func run(addr string, wg *sync.WaitGroup, buffer *Buffer, numTuples int) {
 		}
 
 		count += int(buffer.Size)
-
 	}
 	fmt.Println("Downstream finished")
 	duration := time.Since(start)
 	stream.CloseSend()
 	go shutdown(addr)
-	fmt.Println("Closed down stream")
 
 	task.End()
 
