@@ -4,13 +4,16 @@ import (
 	"context"
 	"flag"
 	"fmt"
+	"io"
 	"os"
 	"runtime"
+	"runtime/trace"
 	"sync"
 	"time"
 
 	"github.com/zikunw/grpc-goproc-experiment/message"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 )
 
 // Commandline input
@@ -18,6 +21,7 @@ var numReciever int
 var gomaxprocs int
 var numTuples int
 var batchSize int
+var profile bool
 
 // Reciever list (index=#reciever-1)
 var RECIEVER_ADDRS = []string{
@@ -55,54 +59,106 @@ func main() {
 	flag.IntVar(&gomaxprocs, "proc", 1, "Num for GOMAXPROCS config (default=1)")
 	flag.IntVar(&numTuples, "t", 1, "Num of tuples send (default=1)")
 	flag.IntVar(&batchSize, "batch", 1, "Batch Size (default=1)")
+	flag.BoolVar(&profile, "profile", false, "Use profile (default=false)")
 	flag.Parse()
 
 	println("Running sender with", numReciever, gomaxprocs, numTuples, batchSize)
 
 	runtime.GOMAXPROCS(gomaxprocs)
 
-	// Create downstreams
-	recievers := RECIEVER_ADDRS[:numReciever]
-	reciever_streams := []*BatchStream{}
-	for _, reciever := range recievers {
-		reciever_streams = append(reciever_streams, NewBatchStream(reciever))
+	if profile {
+		f, _ := os.Create("trace.out")
+		defer f.Close()
+		trace.Start(f)
+		defer trace.Stop()
 	}
+
+	_, task := trace.NewTask(context.Background(), "Preparation")
+
+	// Create downstreams
+	// recievers := RECIEVER_ADDRS[:numReciever]
+	// reciever_streams := []*BatchStream{}
+	// for _, reciever := range recievers {
+	// 	reciever_streams = append(reciever_streams, NewBatchStream(reciever))
+	// }
 
 	// Populate buffer
 	buffer := &Buffer{}
-	for i := 0; i < numTuples; i++ {
+	for i := 0; i < batchSize; i++ {
 		buffer.Content = append(buffer.Content, message.KV{Key: int64(i), Value: int64(i)})
 		buffer.Size += 1
 	}
 
+	task.End()
+
 	// Start experiment
 	var wg sync.WaitGroup
-	for i, stream := range reciever_streams {
+	for _, addr := range RECIEVER_ADDRS[:numReciever] {
 		wg.Add(1)
-		go run(stream, &wg, buffer, numTuples/numReciever, recievers[i])
+		go run(addr, &wg, buffer, numTuples/numReciever)
 	}
 
 	wg.Wait()
 }
 
-func run(stream *BatchStream, wg *sync.WaitGroup, buffer *Buffer, numTuples int, addr string) {
+func run(addr string, wg *sync.WaitGroup, buffer *Buffer, numTuples int) {
+
+	conn := getConn(addr)
+	stream, err := conn.Input(context.Background())
+	if err != nil {
+		panic(err)
+	}
+
+	_, task := trace.NewTask(context.Background(), "run()")
+
 	count := 0
-	fmt.Println("Downstream started running")
+	batchCache := &message.Batch{}
+	fmt.Println("Downstream started running with", addr, numTuples)
+
 	start := time.Now()
-	for count+len(buffer.Content) < numTuples {
-		count += int(buffer.Size)
-		err := stream.Put(buffer)
-		if err != nil {
-			panic(err)
+	fmt.Println(addr, count+int(buffer.Size), numTuples)
+	for count+int(buffer.Size) < numTuples {
+
+		var err error
+		var i uint
+		for i = 0; i < buffer.Size; i++ { // For each key-value pair in the buffer
+			if len(batchCache.Kvs) == cap(batchCache.Kvs) {
+				batchCache.Kvs = append(batchCache.Kvs, message.KVFromVTPool())
+			} else {
+				batchCache.Kvs = batchCache.Kvs[:len(batchCache.Kvs)+1]
+				if batchCache.Kvs[len(batchCache.Kvs)-1] == nil {
+					batchCache.Kvs[len(batchCache.Kvs)-1] = message.KVFromVTPool()
+				}
+			}
+			batchCache.Kvs[i].Key = (*buffer).Content[i].Key
+			batchCache.Kvs[i].Value = (*buffer).Content[i].Value
 		}
+
+		err = stream.Send(batchCache)
+		if err != nil {
+			if err != io.EOF {
+				panic(err)
+			}
+		}
+		_, err = stream.Recv()
+		if err != nil {
+			if err != io.EOF {
+				panic(err)
+			}
+		}
+
+		count += int(buffer.Size)
+
 	}
 	fmt.Println("Downstream finished")
 	duration := time.Since(start)
-	stream.Close()
+	stream.CloseSend()
 	go shutdown(addr)
 	fmt.Println("Closed down stream")
 
-	_, err := f.WriteString(fmt.Sprintf("%d,%d,%s,%d\n", numReciever, gomaxprocs, addr, duration))
+	task.End()
+
+	_, err = f.WriteString(fmt.Sprintf("%d,%d,%s,%d\n", numReciever, gomaxprocs, addr, duration))
 	if err != nil {
 		panic(err)
 	}
@@ -116,4 +172,12 @@ func shutdown(address string) {
 	}
 	client := message.NewWorkerClient(conn)
 	client.Shutdown(context.Background(), &message.Empty{})
+}
+
+func getConn(addr string) message.WorkerClient {
+	conn, err := grpc.NewClient(addr, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	if err != nil {
+		panic(err)
+	}
+	return message.NewWorkerClient(conn)
 }
