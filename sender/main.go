@@ -131,6 +131,7 @@ func run(addr string, wg *sync.WaitGroup, buffer *Buffer, numTuples int) {
 
 	start := time.Now()
 	fmt.Println(addr, count+int(buffer.Size), numTuples)
+
 	for count+int(buffer.Size) < numTuples {
 
 		var err error
