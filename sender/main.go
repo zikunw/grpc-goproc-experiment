@@ -112,20 +112,20 @@ func run(addr string, wg *sync.WaitGroup, buffer *Buffer, numTuples int) {
 	_, task := trace.NewTask(context.Background(), "run()")
 
 	count := 0
-	batchCache := &message.Batch{}
-	var i uint
-	for i = 0; i < buffer.Size; i++ { // For each key-value pair in the buffer
-		if len(batchCache.Kvs) == cap(batchCache.Kvs) {
-			batchCache.Kvs = append(batchCache.Kvs, message.KVFromVTPool())
-		} else {
-			batchCache.Kvs = batchCache.Kvs[:len(batchCache.Kvs)+1]
-			if batchCache.Kvs[len(batchCache.Kvs)-1] == nil {
-				batchCache.Kvs[len(batchCache.Kvs)-1] = message.KVFromVTPool()
-			}
-		}
-		batchCache.Kvs[i].Key = (*buffer).Content[i].Key
-		batchCache.Kvs[i].Value = (*buffer).Content[i].Value
-	}
+	// batchCache := &message.Batch{}
+	// var i uint
+	// for i = 0; i < buffer.Size; i++ { // For each key-value pair in the buffer
+	// 	if len(batchCache.Kvs) == cap(batchCache.Kvs) {
+	// 		batchCache.Kvs = append(batchCache.Kvs, message.KVFromVTPool())
+	// 	} else {
+	// 		batchCache.Kvs = batchCache.Kvs[:len(batchCache.Kvs)+1]
+	// 		if batchCache.Kvs[len(batchCache.Kvs)-1] == nil {
+	// 			batchCache.Kvs[len(batchCache.Kvs)-1] = message.KVFromVTPool()
+	// 		}
+	// 	}
+	// 	batchCache.Kvs[i].Key = (*buffer).Content[i].Key
+	// 	batchCache.Kvs[i].Value = (*buffer).Content[i].Value
+	// }
 
 	fmt.Println("Downstream started running with", addr, numTuples)
 
@@ -134,6 +134,20 @@ func run(addr string, wg *sync.WaitGroup, buffer *Buffer, numTuples int) {
 	for count+int(buffer.Size) < numTuples {
 
 		var err error
+		batchCache := &message.Batch{}
+		var i uint
+		for i = 0; i < buffer.Size; i++ { // For each key-value pair in the buffer
+			if len(batchCache.Kvs) == cap(batchCache.Kvs) {
+				batchCache.Kvs = append(batchCache.Kvs, message.KVFromVTPool())
+			} else {
+				batchCache.Kvs = batchCache.Kvs[:len(batchCache.Kvs)+1]
+				if batchCache.Kvs[len(batchCache.Kvs)-1] == nil {
+					batchCache.Kvs[len(batchCache.Kvs)-1] = message.KVFromVTPool()
+				}
+			}
+			batchCache.Kvs[i].Key = (*buffer).Content[i].Key
+			batchCache.Kvs[i].Value = (*buffer).Content[i].Value
+		}
 
 		err = stream.Send(batchCache)
 		if err != nil {
