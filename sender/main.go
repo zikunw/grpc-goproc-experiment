@@ -5,8 +5,10 @@ import (
 	"flag"
 	"fmt"
 	"io"
+	"log"
 	"os"
 	"runtime"
+	"runtime/pprof"
 	"runtime/trace"
 	"sync"
 	"time"
@@ -21,7 +23,7 @@ var numReciever int
 var gomaxprocs int
 var numTuples int
 var batchSize int
-var profile bool
+var stackTrace bool
 
 // Reciever list (index=#reciever-1)
 var RECIEVER_ADDRS = []string{
@@ -59,28 +61,31 @@ func main() {
 	flag.IntVar(&gomaxprocs, "proc", 1, "Num for GOMAXPROCS config (default=1)")
 	flag.IntVar(&numTuples, "t", 1, "Num of tuples send (default=1)")
 	flag.IntVar(&batchSize, "batch", 1, "Batch Size (default=1)")
-	flag.BoolVar(&profile, "profile", false, "Use profile (default=false)")
+	flag.BoolVar(&stackTrace, "trace", false, "Use stack trace (default=false)")
+	var cpuprofile = flag.String("cpuprofile", "", "write cpu profile to file")
 	flag.Parse()
 
 	println("Running sender with", numReciever, gomaxprocs, numTuples, batchSize)
 
 	runtime.GOMAXPROCS(gomaxprocs)
 
-	if profile {
+	if stackTrace {
 		f, _ := os.Create("trace.out")
 		defer f.Close()
 		trace.Start(f)
 		defer trace.Stop()
 	}
 
-	_, task := trace.NewTask(context.Background(), "Preparation")
+	if *cpuprofile != "" {
+		f, err := os.Create(*cpuprofile)
+		if err != nil {
+			log.Fatal(err)
+		}
+		pprof.StartCPUProfile(f)
+		defer pprof.StopCPUProfile()
+	}
 
-	// Create downstreams
-	// recievers := RECIEVER_ADDRS[:numReciever]
-	// reciever_streams := []*BatchStream{}
-	// for _, reciever := range recievers {
-	// 	reciever_streams = append(reciever_streams, NewBatchStream(reciever))
-	// }
+	_, task := trace.NewTask(context.Background(), "Preparation")
 
 	// Populate buffer
 	buffer := &Buffer{}

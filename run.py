@@ -36,18 +36,19 @@ BATCH_SIZE = 5_000
 REPEAT = 3
 USE_PROFILE = "false"
 
-def runSender(numReciever, gomaxprocs, numTuples, batchSize, useProfile):
-  os.system(f"./bin/sender --num={numReciever} --proc={gomaxprocs} -t={numTuples} --batch={batchSize} -profile={useProfile}")
+def runSender(numReciever, gomaxprocs, numTuples, batchSize, useProfile, cpuProfile):
+  os.system(f"./bin/sender --num={numReciever} --proc={gomaxprocs} -t={numTuples} --batch={batchSize} --trace={useProfile} --cpuprofile={cpuProfile}")
 
 def runReciever(port, gomaxprocs):
   run_process_in_background(f"./bin/reciever --port={port} --proc={gomaxprocs}")
 
-def runExperiment(numReciever, gomaxprocs):
+def runExperiment(numReciever, gomaxprocs, i):
   # run receivers
   for i in range(numReciever):
     runReciever(RECIEVER_PORTS[i], 2)
   # run sender
-  runSender(numReciever, gomaxprocs, NUM_TUPLES, BATCH_SIZE, USE_PROFILE)
+  cpuprofile = f"cpu_{numReciever}_{gomaxprocs}_{i}"
+  runSender(numReciever, gomaxprocs, NUM_TUPLES, BATCH_SIZE, USE_PROFILE, cpuprofile)
 
 
 def run_process_in_background(command):
@@ -60,8 +61,8 @@ def run_process_in_background(command):
 
 def main():
   for e in EXPERIMENTS:
-    for _ in range(REPEAT):
-      runExperiment(e["numReciever"], e["gomaxprocs"])
+    for i in range(REPEAT):
+      runExperiment(e["numReciever"], e["gomaxprocs"], i)
       time.sleep(30)
 
 if __name__=="__main__":
