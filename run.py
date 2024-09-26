@@ -35,6 +35,7 @@ NUM_TUPLES = 10_000_000
 BATCH_SIZE = 5_000
 REPEAT = 3
 USE_PROFILE = "false"
+USE_CPU = False
 
 def runSender(numReciever, gomaxprocs, numTuples, batchSize, useProfile, cpuProfile):
   os.system(f"./bin/sender --num={numReciever} --proc={gomaxprocs} -t={numTuples} --batch={batchSize} --trace={useProfile} --cpuprofile={cpuProfile}")
@@ -47,7 +48,7 @@ def runExperiment(numReciever, gomaxprocs, i):
   for i in range(numReciever):
     runReciever(RECIEVER_PORTS[i], 2)
   # run sender
-  cpuprofile = f"cpu_{numReciever}_{gomaxprocs}_{i}"
+  cpuprofile = f"cpu_{numReciever}_{gomaxprocs}_{i}" if USE_CPU else ""
   runSender(numReciever, gomaxprocs, NUM_TUPLES, BATCH_SIZE, USE_PROFILE, cpuprofile)
 
 
