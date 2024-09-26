@@ -136,11 +136,11 @@ func run(addr string, wg *sync.WaitGroup, buffer *Buffer, numTuples int) {
 
 	start := time.Now()
 	fmt.Println(addr, count+int(buffer.Size), numTuples)
+	batchCache := &message.Batch{}
 
 	for count+int(buffer.Size) < numTuples {
 
 		var err error
-		batchCache := &message.Batch{}
 		var i uint
 		for i = 0; i < buffer.Size; i++ { // For each key-value pair in the buffer
 			if len(batchCache.Kvs) == cap(batchCache.Kvs) {
